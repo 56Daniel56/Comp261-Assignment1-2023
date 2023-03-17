@@ -25,6 +25,20 @@ public class Parser {
     static final Pattern TAKEPAT = Pattern.compile("takeFuel");
     static final Pattern WAITPAT = Pattern.compile("wait");
     static final Pattern LOOPPAT = Pattern.compile("loop");
+    static final Pattern IFPAT = Pattern.compile("if");
+    static final Pattern WHILEPAT= Pattern.compile("while");
+    static final Pattern COMMAPAT= Pattern.compile(",");
+    static final Pattern SENSPAT= Pattern.compile("fuelLeft|oppLR|oppFB|numBarrels|barrelLR|barrelFB|wallDist");
+    static final Pattern FUELLEFTPAT= Pattern.compile("fuelLeft");
+    static final Pattern OPPLRPAT= Pattern.compile("oppLR");
+    static final Pattern OPPFBPAT= Pattern.compile("oppFB");
+    static final Pattern NUMBARPAT= Pattern.compile("numBarrels");
+    static final Pattern BARLRPAT= Pattern.compile("barrelLR");
+    static final Pattern BARFBPAT= Pattern.compile("barrelFB");
+    static final Pattern WALLDISTPAT= Pattern.compile("wallDist");
+
+    
+
 
 
     //----------------------------------------------------------------
@@ -76,11 +90,97 @@ public class Parser {
         if(s.hasNext(LOOPPAT)){
             return loopParse(s);
         }
+
+        if(s.hasNext(IFPAT)){
+            return ifParse(s);
+        }
+
+        if(s.hasNext(WHILEPAT)){
+            return whileParse(s);
+        }
+
         fail("statement neither action or loop", s);
         return null;
     }
 
+    ProgramNode whileParse(Scanner s){
+        require(WHILEPAT, "'while' is required", s);
+        require(OPENPAREN, "open bracket required", s);
+        ProgramNode cond = condParse(s);
+        require(CLOSEPAREN, "close bracket required", s);
+        ProgramNode block = parseBlock(s);
+        return null;
+    }
+
+    ProgramNode ifParse(Scanner s){
+        require(IFPAT,"'if' is required",s);
+        require(OPENPAREN, "open bracket required", s);
+        ProgramNode cond = condParse(s);
+        require(CLOSEPAREN, "close bracket required", s);
+        ProgramNode block = parseBlock(s);
+        return null;
+    }
+
+    ProgramNode condParse(Scanner s){
+        ProgramNode relop = relopParse(s);
+        require(OPENPAREN,"required open bracket",s);
+        if(s.hasNext(SENSPAT)){
+            ProgramNode sens = parseSens(s);
+        }
+        require(COMMAPAT, "comma required", s);
+        ProgramNode num = numParse(s);
+        require(CLOSEBRACE, "close bracket required", s);
+        
+        return null;
+    }
+
+    ProgramNode numParse(Scanner s){
+        require(NUMBARPAT, "Number needs to be between correct range", s);
+        return null;
+    }
+
+    ProgramNode parseSens(Scanner s){
+        if(s.hasNext(FUELLEFTPAT)){
+
+
+        }
+        if(s.hasNext(OPPLRPAT)){
+
+        }   
+        if(s.hasNext(OPPFBPAT)){
+
+        }   
+        if(s.hasNext(NUMBARPAT)){
+
+        }  
+        if(s.hasNext(BARLRPAT)){
+
+        }
+        if(s.hasNext(BARFBPAT)){
+            
+        }
+        if(s.hasNext(WALLDISTPAT)){
+
+        }
+        
+        return null;
+    }
     
+    ProgramNode relopParse(Scanner s){
+        if(s.hasNext("lt")){
+
+        }
+        if(s.hasNext("gt")){
+
+        }
+        if(s.hasNext("eq")){
+
+        }
+        
+        
+        return null;
+    }
+
     ProgramNode actionParse(Scanner s){
         if(s.hasNext(MOVEPAT)){
             return parseMove(s);
@@ -349,3 +449,4 @@ class FuelNode implements ProgramNode{
         robot.takeFuel();
     }
 }
+
