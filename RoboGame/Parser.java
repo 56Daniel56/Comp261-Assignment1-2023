@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.locks.Condition;
 import java.util.regex.*;
 
 /**
@@ -85,101 +86,141 @@ public class Parser {
          if(s.hasNext(ACTPAT)){
             ProgramNode act = actionParse(s);
             require(";", "No semi collon found", s);
+            if(act==null){
+                return null;
+            }
             return act;
         }
         if(s.hasNext(LOOPPAT)){
-            return loopParse(s);
+
+            ProgramNode loop = loopParse(s);
+            if(loop == null){
+                return null;
+            }
+            return loop;
         }
 
         if(s.hasNext(IFPAT)){
-            return ifParse(s);
+            ProgramNode ifParse =ifParse(s);
+            if(ifParse != null){
+                return ifParse;
+            }
         }
 
         if(s.hasNext(WHILEPAT)){
-            return whileParse(s);
-        }
-
-        fail("statement neither action or loop", s);
-        return null;
-    }
-
-    ProgramNode whileParse(Scanner s){
-        require(WHILEPAT, "'while' is required", s);
-        require(OPENPAREN, "open bracket required", s);
-        ProgramNode cond = condParse(s);
-        require(CLOSEPAREN, "close bracket required", s);
-        ProgramNode block = parseBlock(s);
-        return null;
-    }
-
-    ProgramNode ifParse(Scanner s){
-        require(IFPAT,"'if' is required",s);
-        require(OPENPAREN, "open bracket required", s);
-        ProgramNode cond = condParse(s);
-        require(CLOSEPAREN, "close bracket required", s);
-        ProgramNode block = parseBlock(s);
-        return null;
-    }
-
-    ProgramNode condParse(Scanner s){
-        ProgramNode relop = relopParse(s);
-        require(OPENPAREN,"required open bracket",s);
-        if(s.hasNext(SENSPAT)){
-            ProgramNode sens = parseSens(s);
-        }
-        require(COMMAPAT, "comma required", s);
-        ProgramNode num = numParse(s);
-        require(CLOSEBRACE, "close bracket required", s);
-        
-        return null;
-    }
-
-    ProgramNode numParse(Scanner s){
-        require(NUMBARPAT, "Number needs to be between correct range", s);
-        return null;
-    }
-
-    ProgramNode parseSens(Scanner s){
-        if(s.hasNext(FUELLEFTPAT)){
-
-
-        }
-        if(s.hasNext(OPPLRPAT)){
-
-        }   
-        if(s.hasNext(OPPFBPAT)){
-
-        }   
-        if(s.hasNext(NUMBARPAT)){
-
-        }  
-        if(s.hasNext(BARLRPAT)){
-
-        }
-        if(s.hasNext(BARFBPAT)){
+            ProgramNode whileParse = whileParse(s);
+            if(whileParse != null){
+                return whileParse;
+            }
             
         }
-        if(s.hasNext(WALLDISTPAT)){
 
+        fail("issue parsing current statement!", s);
+        return null;
+    }
+
+    WhileNode whileParse(Scanner s){
+        require(WHILEPAT, "'while' is required", s);
+        require(OPENPAREN, "open bracket required", s);
+        CondNode cond = condParse(s);
+        require(CLOSEPAREN, "close bracket required", s);
+        ProgramNode block = parseBlock(s);
+        WhileNode n = new WhileNode();
+        return n;
+    }
+
+    IfNode ifParse(Scanner s){
+        require(IFPAT,"'if' is required",s);
+        require(OPENPAREN, "open bracket required", s);
+        CondNode cond = condParse(s);
+        require(CLOSEPAREN, "close bracket required", s);
+        ProgramNode block = parseBlock(s);
+        IfNode n = new IfNode();
+        return n;
+    }
+
+    CondNode condParse(Scanner s){
+        
+        BooleanNode relop = relopParse(s);
+
+        require(OPENPAREN,"required open bracket",s);
+        SensNode sens = null;
+        if(s.hasNext(SENSPAT)){
+            sens = parseSens(s);
         }
+        require(COMMAPAT, "comma required", s);
+        int num = numParse(s);
+        require(CLOSEPAREN, "close bracket required", s);
+        
+        final SensNode sen = sens;
+        return new CondNode() {
+           
+            public boolean execute(Robot robot) {
+                return relop.evaluate(sen.evaluate(robot),num);
+            }
+            
+        };
+        //return relop.evaluate(sens.getValue(),num); 
+    }
+
+    int numParse(Scanner s){
+        int num = requireInt(NUMPAT, "Number needs to be between correct range", s);
+        
+        return num;
+    }
+
+    SensNode parseSens(Scanner s){
+        if(s.hasNext(FUELLEFTPAT)){
+            require(FUELLEFTPAT, "fuelleft rquired", s);
+            return new FuelLeftNode();
+        }
+        else if(s.hasNext(OPPLRPAT)){
+            //return parseOppLr(s);
+        }   
+        else if(s.hasNext(OPPFBPAT)){
+            //return parseOppFb(s);
+        }   
+        else if(s.hasNext(NUMBARPAT)){
+            require(NUMBARPAT, "required number pattern tokken", s);
+            return new NumberBarrelNode();
+           // return parseNumBar(s);
+        }  
+        else if(s.hasNext(BARLRPAT)){
+           // return parseBarLr(s);
+        }
+        else if(s.hasNext(BARFBPAT)){
+           // return parseBarFb(s);
+        }
+        else if(s.hasNext(WALLDISTPAT)){
+            //return parseWallDist(s);
+        }
+        else{
+            fail("parseSens parameter missing!", s);
+        }
+        
         
         return null;
     }
     
-    ProgramNode relopParse(Scanner s){
+    BooleanNode relopParse(Scanner s){
         if(s.hasNext("lt")){
-
-        }
+            require("eq",  "missing eq symbol", s);
+            return BooleanNode.lt;
+       }
         if(s.hasNext("gt")){
-
+            require("gt",  "missing gt symbol", s);
+            return BooleanNode.gt;
         }
         if(s.hasNext("eq")){
-
+            require("eq",  "missing eq symbol", s);
+            return BooleanNode.eq;
         }
         
         
         return null;
     }
+
+
 
     ProgramNode actionParse(Scanner s){
         if(s.hasNext(MOVEPAT)){
@@ -226,6 +267,18 @@ public class Parser {
         
     }
 
+
+
+    ProgramNode parseFuelLeft(Scanner s){
+        require("fuelLeft","fuel left needed!",s);
+        //return new FuelLeftNode().howMuch();
+        return null;
+
+    }
+
+
+
+
     //Grammer: LOOP ::= "loop" BLOCK
     LoopNode loopParse(Scanner s){
         require(LOOPPAT, "no 'loop' found", s);
@@ -246,7 +299,9 @@ public class Parser {
             blocks.add(parseStatement(s));
         }
         require(CLOSEBRACE,"expecting ending bracket", s);
-
+        if(blocks.isEmpty()){
+            fail("Block had no tokens that it could take", s);
+        }
         return new BlockNode(blocks);
 
    
@@ -338,6 +393,54 @@ public class Parser {
 interface ProgramNode{
     public void execute(Robot robot);
 }
+
+interface CondNode{
+    boolean execute(Robot robot);
+}
+
+interface BooleanNode{
+   public boolean evaluate(int a, int b);
+
+   BooleanNode eq = new BooleanNode(){
+    public boolean evaluate(int a, int b) {
+        return a==b;
+
+    }
+    public String toString(){
+        return "eq";
+    }
+};
+BooleanNode lt = new BooleanNode(){
+    public boolean evaluate(int a, int b) {
+        return a<b;
+
+    }
+    public String toString(){
+        return "lt";
+    }
+};
+BooleanNode gt = new BooleanNode(){
+    public boolean evaluate(int a, int b) {
+        return a>b;
+        }
+        public String toString(){
+            return "gt";
+        }
+ };  
+
+
+
+}
+
+
+interface ExprNode{
+    public int evaluate(Robot robot);
+}
+
+
+interface SensNode extends ExprNode{
+}
+
 
 class StatementNode implements ProgramNode{
     //value
@@ -449,4 +552,46 @@ class FuelNode implements ProgramNode{
         robot.takeFuel();
     }
 }
+
+class FuelLeftNode implements SensNode{
+    public FuelLeftNode(){}
+   
+    public int evaluate(Robot robot){
+        return robot.getFuel();
+    }
+    public String toString(){
+        return "fuelleft";
+    }
+
+}
+
+class NumberBarrelNode implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.numBarrels();
+        return this.value;
+    }
+
+    public String toString(){
+        return "number of barrels";
+    }
+}
+
+class IfNode implements ProgramNode{
+    public IfNode(){}
+
+    public void execute(Robot robot) {
+        
+        throw new UnsupportedOperationException("Unimplemented method 'execute'");
+    }
+    
+}
+
+class WhileNode implements ProgramNode{
+    public WhileNode(){}
+
+    public void execute(Robot robot) {
+
+        throw new UnsupportedOperationException("Unimplemented method 'execute'");
+    }}
 
