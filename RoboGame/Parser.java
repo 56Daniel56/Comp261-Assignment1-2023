@@ -65,6 +65,7 @@ public class Parser {
             if(programN != null){
                 nodeList.add(programN);
             }
+            else{fail("something bad happened with the statement!",s);}
         }
         
         return new ProgramNode() {
@@ -119,24 +120,35 @@ public class Parser {
         return null;
     }
 
-    WhileNode whileParse(Scanner s){
+    ProgramNode whileParse(Scanner s){
         require(WHILEPAT, "'while' is required", s);
         require(OPENPAREN, "open bracket required", s);
         CondNode cond = condParse(s);
         require(CLOSEPAREN, "close bracket required", s);
         ProgramNode block = parseBlock(s);
-        WhileNode n = new WhileNode();
-        return n;
+        return new ProgramNode() {
+            public void execute(Robot robot) {
+                while(cond.execute(robot) == true){
+                    block.execute(robot);
+                }
+            }
+        };
     }
 
-    IfNode ifParse(Scanner s){
+    ProgramNode ifParse(Scanner s){
         require(IFPAT,"'if' is required",s);
         require(OPENPAREN, "open bracket required", s);
         CondNode cond = condParse(s);
         require(CLOSEPAREN, "close bracket required", s);
         ProgramNode block = parseBlock(s);
-        IfNode n = new IfNode();
-        return n;
+
+        return new ProgramNode() {
+            public void execute(Robot robot) {
+                if(cond.execute(robot)){
+                    block.execute(robot);
+                }
+            }
+        };
     }
 
     CondNode condParse(Scanner s){
@@ -190,6 +202,7 @@ public class Parser {
         }
         else if(s.hasNext(BARFBPAT)){
            // return parseBarFb(s);
+           return new BarrelFBNode();
         }
         else if(s.hasNext(WALLDISTPAT)){
             //return parseWallDist(s);
@@ -465,7 +478,10 @@ class LoopNode implements ProgramNode{
         this.stmt = stmt;
     }
     public void execute(Robot robot){
-        this.stmt.execute(robot);
+        while(true){
+            this.stmt.execute(robot);
+        }
+        
 
     }
 }
@@ -476,11 +492,11 @@ class BlockNode implements ProgramNode{
         this.blocks = blocks;
     }
     public void execute(Robot robot){
-        while(true){
+
             for(ProgramNode block : blocks){
                 block.execute(robot);
             }
-    }
+    
     }
     public String toString(){
         String str = " ";
@@ -577,21 +593,14 @@ class NumberBarrelNode implements SensNode{
     }
 }
 
-class IfNode implements ProgramNode{
-    public IfNode(){}
-
-    public void execute(Robot robot) {
-        
-        throw new UnsupportedOperationException("Unimplemented method 'execute'");
+class BarrelFBNode implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.getBarrelFB();
+        return this.value;
     }
-    
+
+    public String toString(){
+        return "number of barrels";
+    }
 }
-
-class WhileNode implements ProgramNode{
-    public WhileNode(){}
-
-    public void execute(Robot robot) {
-
-        throw new UnsupportedOperationException("Unimplemented method 'execute'");
-    }}
-
