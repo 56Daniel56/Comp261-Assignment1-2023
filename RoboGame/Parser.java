@@ -19,7 +19,7 @@ public class Parser {
     static final Pattern CLOSEPAREN = Pattern.compile("\\)");
     static final Pattern OPENBRACE = Pattern.compile("\\{");
     static final Pattern CLOSEBRACE = Pattern.compile("\\}");
-    static final Pattern ACTPAT = Pattern.compile("move|turnL|turnR|turnAround|shieldOn|shielfOff|takeFuel|wait");
+    static final Pattern ACTPAT = Pattern.compile("move|turnL|turnR|turnAround|shieldOn|shieldOff|takeFuel|wait");
     static final Pattern MOVEPAT = Pattern.compile("move");
     static final Pattern LEFTPAT = Pattern.compile("turnL");
     static final Pattern RIGHTPAT = Pattern.compile("turnR");
@@ -37,6 +37,9 @@ public class Parser {
     static final Pattern BARLRPAT= Pattern.compile("barrelLR");
     static final Pattern BARFBPAT= Pattern.compile("barrelFB");
     static final Pattern WALLDISTPAT= Pattern.compile("wallDist");
+    static final Pattern SHIELDONPAT= Pattern.compile("shieldOn");
+    static final Pattern SHIELDOFFPAT= Pattern.compile("shieldOff");
+
 
     
 
@@ -188,24 +191,28 @@ public class Parser {
         }
         else if(s.hasNext(OPPLRPAT)){
             //return parseOppLr(s);
+            return new OpponentLR();
         }   
         else if(s.hasNext(OPPFBPAT)){
             //return parseOppFb(s);
+            return new OpponentFB();
         }   
         else if(s.hasNext(NUMBARPAT)){
             require(NUMBARPAT, "required number pattern tokken", s);
             return new NumberBarrelNode();
-           // return parseNumBar(s);
         }  
         else if(s.hasNext(BARLRPAT)){
            // return parseBarLr(s);
+           return new ClosestBarrelLR();
         }
         else if(s.hasNext(BARFBPAT)){
            // return parseBarFb(s);
+           fail("this barrelfb method not fully implemented!",s);
            return new BarrelFBNode();
         }
         else if(s.hasNext(WALLDISTPAT)){
             //return parseWallDist(s);
+            return new WallDistNode();
         }
         else{
             fail("parseSens parameter missing!", s);
@@ -217,7 +224,7 @@ public class Parser {
     
     BooleanNode relopParse(Scanner s){
         if(s.hasNext("lt")){
-            require("eq",  "missing eq symbol", s);
+            require("lt",  "missing eq symbol", s);
             return BooleanNode.lt;
        }
         if(s.hasNext("gt")){
@@ -251,6 +258,14 @@ public class Parser {
         if(s.hasNext(WAITPAT)){
             return parseWait(s);
         }
+        if(s.hasNext(SHIELDONPAT)){
+            require("shieldOn", "requires shield on", s);
+            return new ShieldOnNode();
+        }
+        if(s.hasNext(SHIELDOFFPAT)){
+            require("shieldOff", "requires shield off", s);
+            return new ShieldOffNode();
+            }
         return null;
     }
 
@@ -288,6 +303,8 @@ public class Parser {
         return null;
 
     }
+
+
 
 
 
@@ -569,6 +586,26 @@ class FuelNode implements ProgramNode{
     }
 }
 
+class ShieldOnNode implements ProgramNode{
+    private boolean shield;
+    public void execute(Robot robot){
+        this.shield = robot.setShield(true);
+    }
+    public String toString(){
+        return "shield on";
+    }
+}
+class ShieldOffNode implements ProgramNode{
+    private boolean shield;
+    public void execute(Robot robot){
+        this.shield = robot.setShield(false);
+    }
+    public String toString(){
+        return "shield off";
+    }
+}
+
+
 class FuelLeftNode implements SensNode{
     public FuelLeftNode(){}
    
@@ -602,5 +639,72 @@ class BarrelFBNode implements SensNode{
 
     public String toString(){
         return "number of barrels";
+    }
+}
+
+class BarrelLRNode implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.getBarrelLR();
+        return this.value;
+    }
+
+    public String toString(){
+        return "number of barrels";
+    }
+}
+
+class WallDistNode implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value =  robot.getDistanceToWall();
+        return this.value;
+    }
+    public String toString(){
+        return "dist to wall!";
+    }
+}
+
+class OpponentLR implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.getOpponentLR();
+        return this.value;
+    }
+    public String toString(){
+        return "opponent LR... whatever that means?";
+    }
+}
+
+class OpponentFB implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.getOpponentFB();
+        return this.value;
+    }
+    public String toString(){
+        return "opponent FB... whatever that means?";
+    }
+}
+
+class ClosestBarrelFB implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.getClosestBarrelFB();
+        return this.value;
+    }
+    public String toString(){
+        return "clossest barrel FB";
+    }
+}
+
+class ClosestBarrelLR implements SensNode{
+    int value;
+    public int evaluate(Robot robot){
+        this.value = robot.getClosestBarrelLR();
+        return this.value;
+    }
+    public String toString(){
+        return "clossest barrel LR";
     }
 }
