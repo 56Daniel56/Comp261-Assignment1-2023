@@ -3,6 +3,6 @@
  * including the top level program node
  */
 
-// public interface ProgramNode {
-  //  public void execute(Robot robot);
-//}
+interface ProgramNode {
+    public void execute(Robot robot);
+}

@@ -40,6 +40,7 @@ public class Parser {
     static final Pattern SHIELDONPAT= Pattern.compile("shieldOn");
     static final Pattern SHIELDOFFPAT= Pattern.compile("shieldOff");
     static final Pattern TURNAROUNDPAT= Pattern.compile("turnAround");
+    static final Pattern RELOPPAT = Pattern.compile("lt|gt|eq");
 
 
     
@@ -293,12 +294,41 @@ public class Parser {
         return null;
     }
 
+    CondNode parseCond(Scanner s){
+        if(s.hasNext("and")){
+            require("and", "required 'and' for condition", s);
+        }
+        if(s.hasNext("or")){
+            require("or", "required or for  condition", s);
+        }
+        if(s.hasNext("not")){
+            require("not", "not required", s);
+        }
+        if(s.hasNext(RELOPPAT)){
+            if(s.hasNext("lt")){
+                require("lt", "lt required", s);
+            }
+            if(s.hasNext("gt")){
+                require("gt", "gt required", s);
+            }
+            if(s.hasNext("eq")){
+                require("eq", "eq required", s);
+            }
+        }
+        return null;
+        
+
+    }
+
+
     ProgramNode parseMove(Scanner s){
         require(MOVEPAT,"need 'move'",s);
         ProgramNode move = new MoveNode();
         if(!s.hasNext(";")){
             require(OPENPAREN, "open bracket required if no ; right away", s);
-            
+
+            //need to finish the logic here!!!!!!!!!!!!!!!
+            parseCond(s);
         }
         return move;
         
@@ -455,6 +485,15 @@ interface ProgramNode{
 
 interface CondNode{
     boolean execute(Robot robot);
+
+    CondNode cond = new CondNode() {
+
+        public boolean execute(Robot robot) {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'execute'");
+        }
+        
+    };
 }
 
 interface BooleanNode{
