@@ -1,3 +1,4 @@
+
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.regex.*;
@@ -146,7 +147,7 @@ public class Parser {
         CondNode cond = condParse(s);
         require(CLOSEPAREN, "close bracket required", s);
         ProgramNode block = parseBlock(s);
-
+        
         return new ProgramNode() {
             public void execute(Robot robot) {
                 if(cond.execute(robot)){
@@ -208,13 +209,13 @@ public class Parser {
         else if(s.hasNext(BARLRPAT)){
            // return parseBarLr(s);
            require(BARLRPAT, "Requires barrellrpat", s);
-           return new BarrelLRNode();
+           return new ClosestBarrelLR();
         }
         else if(s.hasNext(BARFBPAT)){
            // return parseBarFb(s);
            //fail("this barrelfb method not fully implemented!",s);
            require(BARFBPAT, "barrelfb required", s);
-           return new BarrelFBNode();
+           return new ClosestBarrelFB();
         }
         else if(s.hasNext(WALLDISTPAT)){
             //return parseWallDist(s);
@@ -691,7 +692,7 @@ class NumberBarrelNode implements SensNode{
 class BarrelFBNode implements SensNode{
     int value;
     public int evaluate(Robot robot){
-        this.value = robot.getBarrelFB(0);
+        this.value = robot.getClosestBarrelFB();
         return this.value;
     }
 
@@ -703,7 +704,7 @@ class BarrelFBNode implements SensNode{
 class BarrelLRNode implements SensNode{
     int value;
     public int evaluate(Robot robot){
-        this.value = robot.getBarrelLR(0);
+        this.value = robot.getClosestBarrelLR();
         return this.value;
     }
 
