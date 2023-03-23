@@ -39,6 +39,7 @@ public class Parser {
     static final Pattern WALLDISTPAT= Pattern.compile("wallDist");
     static final Pattern SHIELDONPAT= Pattern.compile("shieldOn");
     static final Pattern SHIELDOFFPAT= Pattern.compile("shieldOff");
+    static final Pattern TURNAROUNDPAT= Pattern.compile("turnAround");
 
 
     
@@ -191,10 +192,12 @@ public class Parser {
         }
         else if(s.hasNext(OPPLRPAT)){
             //return parseOppLr(s);
+            require(OPPLRPAT, "require opponent lr ", s);
             return new OpponentLR();
         }   
         else if(s.hasNext(OPPFBPAT)){
             //return parseOppFb(s);
+            require(OPPFBPAT, "require opponent fb ", s);
             return new OpponentFB();
         }   
         else if(s.hasNext(NUMBARPAT)){
@@ -203,15 +206,18 @@ public class Parser {
         }  
         else if(s.hasNext(BARLRPAT)){
            // return parseBarLr(s);
-           return new ClosestBarrelLR();
+           require(BARLRPAT, "Requires barrellrpat", s);
+           return new BarrelLRNode();
         }
         else if(s.hasNext(BARFBPAT)){
            // return parseBarFb(s);
-           fail("this barrelfb method not fully implemented!",s);
+           //fail("this barrelfb method not fully implemented!",s);
+           require(BARFBPAT, "barrelfb required", s);
            return new BarrelFBNode();
         }
         else if(s.hasNext(WALLDISTPAT)){
             //return parseWallDist(s);
+            require(WALLDISTPAT, "requiring wall dist pat", s);
             return new WallDistNode();
         }
         else{
@@ -260,18 +266,41 @@ public class Parser {
         }
         if(s.hasNext(SHIELDONPAT)){
             require("shieldOn", "requires shield on", s);
-            return new ShieldOnNode();
+            return new ProgramNode() {
+                public void execute(Robot robot){
+                    robot.setShield(true);
+                }
+                public String toString(){
+                    return "shield on";
+                }
+            };
         }
         if(s.hasNext(SHIELDOFFPAT)){
             require("shieldOff", "requires shield off", s);
-            return new ShieldOffNode();
+            return new ProgramNode() {
+                public void execute(Robot robot){
+                    robot.setShield(false);
+                }
+                public String toString(){
+                    return "shield off";
+                }
+            };
             }
+        if(s.hasNext(TURNAROUNDPAT)){
+            require(TURNAROUNDPAT, "requires turn around pat", s);
+            return new TurnAroundNode();
+        }
         return null;
     }
 
     ProgramNode parseMove(Scanner s){
         require(MOVEPAT,"need 'move'",s);
-            return new MoveNode();
+        ProgramNode move = new MoveNode();
+        if(!s.hasNext(";")){
+            require(OPENPAREN, "open bracket required if no ; right away", s);
+            
+        }
+        return move;
         
     }
     ProgramNode parseLeft(Scanner s){
@@ -586,24 +615,6 @@ class FuelNode implements ProgramNode{
     }
 }
 
-class ShieldOnNode implements ProgramNode{
-    private boolean shield;
-    public void execute(Robot robot){
-        this.shield = robot.setShield(true);
-    }
-    public String toString(){
-        return "shield on";
-    }
-}
-class ShieldOffNode implements ProgramNode{
-    private boolean shield;
-    public void execute(Robot robot){
-        this.shield = robot.setShield(false);
-    }
-    public String toString(){
-        return "shield off";
-    }
-}
 
 
 class FuelLeftNode implements SensNode{
@@ -616,6 +627,14 @@ class FuelLeftNode implements SensNode{
         return "fuelleft";
     }
 
+}
+class TurnAroundNode implements ProgramNode{
+    public void execute(Robot robot){
+        robot.turnAround();
+    }
+    public String toString(){
+        return "turn around node";
+    }
 }
 
 class NumberBarrelNode implements SensNode{
@@ -633,7 +652,7 @@ class NumberBarrelNode implements SensNode{
 class BarrelFBNode implements SensNode{
     int value;
     public int evaluate(Robot robot){
-        this.value = robot.getBarrelFB();
+        this.value = robot.getBarrelFB(0);
         return this.value;
     }
 
@@ -645,7 +664,7 @@ class BarrelFBNode implements SensNode{
 class BarrelLRNode implements SensNode{
     int value;
     public int evaluate(Robot robot){
-        this.value = robot.getBarrelLR();
+        this.value = robot.getBarrelLR(0);
         return this.value;
     }
 
