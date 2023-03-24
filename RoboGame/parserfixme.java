@@ -1,5 +1,4 @@
 
-    
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.regex.*;
@@ -11,7 +10,8 @@ import java.util.regex.*;
  * - several utility methods to help with the parsing
  * See also the TestParser class for testing your code.
  */
-public class parserfixme {
+public class Parser {
+
 
     // Useful Patterns
 
@@ -44,6 +44,7 @@ public class parserfixme {
     static final Pattern RELOPPAT = Pattern.compile("lt|gt|eq");
     static final Pattern OPPAT = Pattern.compile("add|sub|mul|div");
     static final Pattern ORPAT= Pattern.compile("or");
+
 
 
     
@@ -130,8 +131,7 @@ public class parserfixme {
 
     ProgramNode whileParse(Scanner s){
         require(WHILEPAT, "'while' is required", s);
-
-        require(OPENBRACE, "open bracket required", s);
+        require(OPENPAREN, "open bracket required", s);
         CondNode cond = condParse(s);
         require(CLOSEPAREN, "close bracket required", s);
         ProgramNode block = parseBlock(s);
@@ -580,6 +580,7 @@ public class parserfixme {
 //  class BlockNode implements ProgramNode {.....
 //     with fields, a toString() method and an execute() method
 //
+
 
 
 interface ProgramNode{
