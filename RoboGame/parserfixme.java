@@ -132,7 +132,7 @@ public class Parser {
     ProgramNode whileParse(Scanner s){
         require(WHILEPAT, "'while' is required", s);
         require(OPENPAREN, "open bracket required", s);
-        CondNode cond = condParse(s);
+        CondNode cond = parseCond(s);
         require(CLOSEPAREN, "close bracket required", s);
         ProgramNode block = parseBlock(s);
         return new ProgramNode() {
@@ -147,7 +147,7 @@ public class Parser {
     ProgramNode ifParse(Scanner s){
         require(IFPAT,"'if' is required",s);
         require(OPENPAREN, "open bracket required", s);
-        CondNode cond = condParse(s);
+        CondNode cond = parseCond(s);
         require(CLOSEPAREN, "close bracket required", s);
         ProgramNode block = parseBlock(s);
         
@@ -182,6 +182,42 @@ public class Parser {
             
         };
         //return relop.evaluate(sens.getValue(),num); 
+    }
+    CondNode parseCond(Scanner s){
+        if(s.hasNext("and")){
+            require("and", "required 'and' for condition", s);
+            parseAnd(s);
+        }
+        if(s.hasNext(ORPAT)){
+            require(ORPAT, "required or for  condition", s);
+            parseOr(s);
+        }
+        if(s.hasNext("not")){
+            require("not", "not required", s);
+            parseNot(s);
+        }
+        if(s.hasNext(RELOPPAT)){
+            BooleanNode relop = relopParse(s);
+            require(OPENPAREN,"required open bracket",s);
+            SensNode sens = null;
+            if(s.hasNext(SENSPAT)){
+                sens = parseSens(s);
+            }
+            require(COMMAPAT, "comma required", s);
+            int num = numParse(s);
+            require(CLOSEPAREN, "close bracket required", s);
+            
+            final SensNode sen = sens;
+            return new CondNode() {
+            
+                public boolean execute(Robot robot) {
+                    return relop.evaluate(sen.evaluate(robot),num);
+                }
+                
+            };
+        }
+        return null;
+        
     }
 
     int numParse(Scanner s){
@@ -298,42 +334,6 @@ public class Parser {
         return null;
     }
 
-    CondNode parseCond(Scanner s){
-        if(s.hasNext("and")){
-            require("and", "required 'and' for condition", s);
-            parseAnd(s);
-        }
-        if(s.hasNext(ORPAT)){
-            require(ORPAT, "required or for  condition", s);
-            parseOr(s);
-        }
-        if(s.hasNext("not")){
-            require("not", "not required", s);
-            parseNot(s);
-        }
-        if(s.hasNext(RELOPPAT)){
-            BooleanNode relop = relopParse(s);
-            require(OPENPAREN,"required open bracket",s);
-        SensNode sens = null;
-        if(s.hasNext(SENSPAT)){
-            sens = parseSens(s);
-        }
-        require(COMMAPAT, "comma required", s);
-        int num = numParse(s);
-        require(CLOSEPAREN, "close bracket required", s);
-        
-        final SensNode sen = sens;
-        return new CondNode() {
-           
-            public boolean execute(Robot robot) {
-                return relop.evaluate(sen.evaluate(robot),num);
-            }
-            
-        };
-        }
-        return null;
-        
-    }
 
 
     ExprNode parseExpr(Scanner s){
